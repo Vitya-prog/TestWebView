@@ -3,18 +3,17 @@ package com.android.testwebview.ui
 
 
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import com.android.testwebview.R
 import com.android.testwebview.databinding.FragmentLoadScreenBinding
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 private const val TAG = "LoadFragment"
 @AndroidEntryPoint
@@ -26,19 +25,24 @@ private lateinit var binding:FragmentLoadScreenBinding
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentLoadScreenBinding.inflate(inflater, container, false)
-        loadViewModel.getLink.observe(viewLifecycleOwner) {
-            if (it != "" && !MainActivity.isAgain) {
-                toWeb(it)
-            } else {
-                viewLifecycleOwner.lifecycleScope.launch {
-                    loadViewModel.links.observe(viewLifecycleOwner) { test ->
-                        val link = if (MainActivity.isAgain) test.home else test.link
-                        loadViewModel.saveLink(link!!)
-                        toWeb(link)
-                    }
+        val isAgain = MainActivity.isAgain
+        if(!isAgain){
+            loadViewModel.getLinks()
+            loadViewModel.links.observe(viewLifecycleOwner){
+                toWeb(it.link!!)
+            }
+        } else {
+            loadViewModel.receiveDate()
+            loadViewModel.saveLink.observe(viewLifecycleOwner){
+                if(it!="none"){
+                    toWeb(it)
                 }
             }
         }
+
+
+
+
         return binding.root
     }
 
